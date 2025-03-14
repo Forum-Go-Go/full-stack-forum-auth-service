@@ -11,34 +11,58 @@ from dotenv import load_dotenv
 load_dotenv()  # Ensure environment variables are loaded
 
 def login_user(request_obj):
-    data = request_obj.get_json()
-    if not data or 'email' not in data or 'password' not in data:
-        return jsonify({'error': 'Email and password are required.'}), 400
+    print("🚀 [Auth Controller] login_user called - BEFORE READING REQUEST DATA")
+    
+    try:
+        print("📌 [Auth Controller] Reading JSON Data from Request")
+        data = request_obj.get_json(silent=True)  # Force parsing JSON even if headers are missing
+        print(f"📥 [Auth Controller] Received login request data: {data}")
+    except Exception as e:
+        print(f"❌ [Auth Controller] Error parsing request JSON: {e}")
+        return jsonify({'error': 'Invalid JSON format'}), 400
 
     email = data['email']
     password = data['password']
 
     # Retrieve user data from the User Service
+    print(f"🔍 [Auth Controller] Fetching user data from User Service for email: {email}")
     user = get_user_by_email(email)
+
     if not user:
+        print("❌ [Auth Controller] No user found for given email")
         return jsonify({'error': 'Invalid credentials.'}), 401
 
-    # Retrieve the stored hashed password from the user record.
-    # Ensure the field name matches what your User Service returns.
+    print(f"✅ [Auth Controller] User found: {user}")
+
+    # Retrieve the stored hashed password
     stored_hash = user.get('hashedPassword')
     if not stored_hash:
-        # Log the user object for debugging if needed.
-        print("User record is missing the hashed password:", user)
+        print(f"❌ [Auth Controller] User record is missing the hashed password: {user}")
         return jsonify({'error': 'User record is incomplete.'}), 500
 
-    # Use Werkzeug's check_password_hash to verify the password.
+    # Validate password
+    print(f"🔑 [Auth Controller] Verifying password for user {email}")
     if not check_password_hash(stored_hash, password):
+        print("❌ [Auth Controller] Password verification failed")
         return jsonify({'error': 'Invalid credentials.'}), 401
 
+    print("✅ [Auth Controller] Password verification successful")
+
     # Generate JWT and refresh token
+    print("🔐 [Auth Controller] Generating JWT and refresh token")
     token = generate_jwt(user)
     refresh = generate_refresh_token(user)
-    return jsonify({'token': token, 'refreshToken': refresh}), 200
+
+    print("✅ [Auth Controller] JWT and refresh token generated successfully")
+    
+    response = {
+        'token': token,
+        'refreshToken': refresh
+    }
+
+    print(f"📤 [Auth Controller] Returning successful login response: {response}")
+    return jsonify(response), 200
+
 
 def refresh_token(request_obj):
     """
