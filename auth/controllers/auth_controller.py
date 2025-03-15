@@ -48,10 +48,23 @@ def login_user(request_obj):
 
     print("✅ [Auth Controller] Password verification successful")
 
+    # Extract role and verified status from user data
+    user_role = user.get('type', 'user')  # Default to 'user' if role is missing
+    user_verified = bool(user.get('verified', 0))  # Convert to boolean (0 → False, 1 → True)
+
+    print(f"🔍 [Auth Controller] Extracted Role: {user_role}, Verified: {user_verified}")
+
+    # Prepare user payload for JWT
+    user_payload = {
+        'id': user.get('id'),
+        'role': user_role,
+        'verified': user_verified
+    }
+
     # Generate JWT and refresh token
     print("🔐 [Auth Controller] Generating JWT and refresh token")
-    token = generate_jwt(user)
-    refresh = generate_refresh_token(user)
+    token = generate_jwt(user_payload)  # Ensure generate_jwt now includes role & verified
+    refresh = generate_refresh_token(user_payload)
 
     print("✅ [Auth Controller] JWT and refresh token generated successfully")
     
@@ -62,6 +75,7 @@ def login_user(request_obj):
 
     print(f"📤 [Auth Controller] Returning successful login response: {response}")
     return jsonify(response), 200
+
 
 
 def refresh_token(request_obj):
