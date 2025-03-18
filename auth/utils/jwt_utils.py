@@ -14,6 +14,7 @@ def generate_jwt(user):
     payload = {
         'user_id': user.get('id'),
         'role': user.get('role'),
+        'verified': user.get('verified'),
         'iat': datetime.datetime.now(datetime.timezone.utc),
         'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=JWT_EXPIRES_IN)
     }
@@ -29,6 +30,7 @@ def generate_refresh_token(user):
     payload = {
         'user_id': user.get('id'),
         'role': user.get('role'),
+        'verified': user.get('verified'),
         'iat': datetime.datetime.now(datetime.timezone.utc),
         'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=REFRESH_TOKEN_EXPIRES_IN)
     }
@@ -41,4 +43,6 @@ def decode_jwt(token, token_type='access'):
     """
     Decodes a JWT token. You can extend this to differentiate between access and refresh tokens if needed.
     """
-    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    print(f"🛠 [DEBUG] Decoded JWT payload: {payload}")  # ✅ 确保 decoded token 包含 verified
+    return payload

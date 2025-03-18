@@ -27,12 +27,14 @@ def login_user(request_obj):
     # Retrieve user data from the User Service
     print(f"🔍 [Auth Controller] Fetching user data from User Service for email: {email}")
     user = get_user_by_email(email)
+    print(f"🔍 [Auth Controller] Extracted user data: {user}")
 
     if not user:
         print("❌ [Auth Controller] No user found for given email")
         return jsonify({'error': 'Invalid credentials.'}), 401
 
     print(f"✅ [Auth Controller] User found: {user}")
+    print(f"🔍 [Auth Controller] Extracted verified: {user.get('verified')}")
 
     # Retrieve the stored hashed password
     stored_hash = user.get('hashedPassword')
@@ -50,9 +52,9 @@ def login_user(request_obj):
 
     # Extract role and verified status from user data
     user_role = user.get('type', 'user')  # Default to 'user' if role is missing
-    user_verified = bool(user.get('verified', 0))  # Convert to boolean (0 → False, 1 → True)
+    user_verified = user.get('verified') == 1  # Convert to boolean (0 → False, 1 → True)
 
-    print(f"🔍 [Auth Controller] Extracted Role: {user_role}, Verified: {user_verified}")
+    print(f"🛠 [DEBUG] user.get('verified'): {user.get('verified')}, type: {type(user.get('verified'))}")
 
     # Prepare user payload for JWT
     user_payload = {
@@ -70,7 +72,13 @@ def login_user(request_obj):
     
     response = {
         'token': token,
-        'refreshToken': refresh
+        'refreshToken': refresh,
+        'user': {
+            'id': user.get('id'),
+            'email': user.get('email'),
+            'role': user_role,
+            'verified': user_verified
+        }
     }
 
     print(f"📤 [Auth Controller] Returning successful login response: {response}")
