@@ -11,80 +11,63 @@ from dotenv import load_dotenv
 load_dotenv()  # Ensure environment variables are loaded
 
 def login_user(request_obj):
-    print("🚀 [Auth Controller] login_user called - BEFORE READING REQUEST DATA")
-    
     try:
-        print("📌 [Auth Controller] Reading JSON Data from Request")
-        data = request_obj.get_json(silent=True)  # Force parsing JSON even if headers are missing
-        print(f"📥 [Auth Controller] Received login request data: {data}")
-    except Exception as e:
-        print(f"❌ [Auth Controller] Error parsing request JSON: {e}")
-        return jsonify({'error': 'Invalid JSON format'}), 400
+        data = request_obj.get_json(silent=True)
+        email = data.get('email')
+        password = data.get('password')
 
-    email = data['email']
-    password = data['password']
+        if not email or not password:
+            return jsonify({'error': 'Email and password are required'}), 400
 
-    # Retrieve user data from the User Service
-    print(f"🔍 [Auth Controller] Fetching user data from User Service for email: {email}")
-    user = get_user_by_email(email)
-    print(f"🔍 [Auth Controller] Extracted user data: {user}")
+        # ✅ 获取用户信息
+        user = get_user_by_email(email)
+        print(f"🔍 Retrieved user data: {user}")  # ✅ Debug user data
 
-    if not user:
-        print("❌ [Auth Controller] No user found for given email")
-        return jsonify({'error': 'Invalid credentials.'}), 401
+        if not user:
+            return jsonify({'error': 'Invalid credentials'}), 401
 
-    print(f"✅ [Auth Controller] User found: {user}")
-    print(f"🔍 [Auth Controller] Extracted verified: {user.get('verified')}")
+        # ✅ 确保 user 包含 `active`
+        user_active = user.get('active')
+        if user_active is None:
+            return jsonify({'error': 'User account status is undefined'}), 500
 
-    # Retrieve the stored hashed password
-    stored_hash = user.get('hashedPassword')
-    if not stored_hash:
-        print(f"❌ [Auth Controller] User record is missing the hashed password: {user}")
-        return jsonify({'error': 'User record is incomplete.'}), 500
+        # ❌ 账户被封禁
+        if user_active == 0:
+            print(f"🚫 Login blocked: Banned user -> {email}")
+            return jsonify({'error': 'Your account has been banned. Please contact support.'}), 403
 
-    # Validate password
-    print(f"🔑 [Auth Controller] Verifying password for user {email}")
-    if not check_password_hash(stored_hash, password):
-        print("❌ [Auth Controller] Password verification failed")
-        return jsonify({'error': 'Invalid credentials.'}), 401
+        # ✅ 验证密码
+        if not check_password_hash(user.get('hashedPassword', ''), password):
+            return jsonify({'error': 'Invalid credentials'}), 401
 
-    print("✅ [Auth Controller] Password verification successful")
-
-    # Extract role and verified status from user data
-    user_role = user.get('type', 'user')  # Default to 'user' if role is missing
-    user_verified = user.get('verified') == 1  # Convert to boolean (0 → False, 1 → True)
-
-    print(f"🛠 [DEBUG] user.get('verified'): {user.get('verified')}, type: {type(user.get('verified'))}")
-
-    # Prepare user payload for JWT
-    user_payload = {
-        'id': user.get('id'),
-        'role': user_role,
-        'verified': user_verified
-    }
-
-    # Generate JWT and refresh token
-    print("🔐 [Auth Controller] Generating JWT and refresh token")
-    token = generate_jwt(user_payload)  # Ensure generate_jwt now includes role & verified
-    refresh = generate_refresh_token(user_payload)
-
-    print("✅ [Auth Controller] JWT and refresh token generated successfully")
-    
-    response = {
-        'token': token,
-        'refreshToken': refresh,
-        'user': {
+        # ✅ 生成 JWT 令牌
+        user_payload = {
             'id': user.get('id'),
             'email': user.get('email'),
-            'role': user_role,
-            'verified': user_verified
+            'role': user.get('type', 'user'),
+            'verified': user.get('verified') == 1,
+            'active': user_active  # ✅ 这里确保 active 正确存储
         }
-    }
 
-    print(f"📤 [Auth Controller] Returning successful login response: {response}")
-    return jsonify(response), 200
+        token = generate_jwt(user_payload)
+        refresh = generate_refresh_token(user_payload)
 
+        print(f"✅ Successful login: {email} (Role: {user['type']}, Active: {user_active})")
 
+        return jsonify({
+            'token': token,
+            'refreshToken': refresh,
+            'user': {
+                'id': user['id'],
+                'email': user['email'],
+                'role': user['type'],
+                'verified': user['verified'] == 1
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Server error during login: {str(e)}")
+        return jsonify({'error': 'Internal Server Error', 'message': str(e)}), 500
 
 def refresh_token(request_obj):
     """
