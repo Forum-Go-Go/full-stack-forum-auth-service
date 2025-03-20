@@ -50,18 +50,18 @@ def login_user(request_obj):
         }
 
         token = generate_jwt(user_payload)
-        refresh = generate_refresh_token(user_payload)
+        # refresh = generate_refresh_token(user_payload)
 
         print(f"✅ Successful login: {email} (Role: {user['type']}, Active: {user_active})")
 
         return jsonify({
             'token': token,
-            'refreshToken': refresh,
             'user': {
                 'id': user['id'],
                 'email': user['email'],
                 'role': user['type'],
-                'verified': user['verified'] == 1
+                'verified': user['verified'] == 1,
+                'active': user_active
             }
         }), 200
 
