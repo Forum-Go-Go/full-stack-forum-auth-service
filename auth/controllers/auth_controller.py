@@ -34,11 +34,10 @@ def login_user(request_obj):
         user_active = user.get('active')
         if user_active is None:
             raise ServerError('User account status is undefined', status_code=500)
-            # return jsonify({'error': 'User account status is undefined'}), 500
 
         # if user is banned
         if user_active == 0:
-            print(f"🚫 Login blocked: Banned user -> {email}")
+            print(f"Login blocked: Banned user -> {email}")
             return jsonify({'error': 'Your account has been banned. Please contact support.'}), 403
 
         # validate password
@@ -55,9 +54,8 @@ def login_user(request_obj):
         }
 
         token = generate_jwt(user_payload)
-        # refresh = generate_refresh_token(user_payload)
 
-        print(f"✅ Successful login: {email} (Role: {user['type']}, Active: {user_active})")
+        print(f"Successful login: {email} (Role: {user['type']}, Active: {user_active})")
 
         return jsonify({
             'token': token,
@@ -71,9 +69,8 @@ def login_user(request_obj):
         }), 200
 
     except Exception as e:
-        print(f"❌ Server error during login: {str(e)}")
+        print(f"Server error during login: {str(e)}")
         raise ServerError("Internal Server Error", status_code=500)
-        # return jsonify({'error': 'Internal Server Error', 'message': str(e)}), 500
 
 
 def verify_token(request_obj):

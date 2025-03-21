@@ -13,7 +13,7 @@ def get_user_by_email(email):
     """
     try:
         url = f"{USER_SERVICE_URL}/users/search"
-        print(f"🚀 [Auth] Sending request to User Service: {url} with email: {email}")
+        print(f"[Auth] Sending request to User Service: {url} with email: {email}")
 
         # Add timeout to detect if the request is hanging
         response = requests.get(url, params={"email": email}, timeout=5)
@@ -24,8 +24,8 @@ def get_user_by_email(email):
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"❌ [Auth] User Service returned error code {response.status_code}")
+            print(f"[Auth] User Service returned error code {response.status_code}")
             return None
     except requests.exceptions.RequestException as e:
-        print(f"❌ [Auth] Error fetching user data from User Service: {e}")
+        print(f"[Auth] Error fetching user data from User Service: {e}")
         return None
