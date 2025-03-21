@@ -75,26 +75,6 @@ def login_user(request_obj):
         raise ServerError("Internal Server Error", status_code=500)
         # return jsonify({'error': 'Internal Server Error', 'message': str(e)}), 500
 
-def refresh_token(request_obj):
-    """
-    This endpoint accepts a refresh token and returns a new JWT.
-    """
-    data = request_obj.get_json()
-    if not data or 'refreshToken' not in data:
-        return jsonify({'error': 'Refresh token is required.'}), 400
-
-    refresh_token_value = data['refreshToken']
-    try:
-        payload = decode_jwt(refresh_token_value, token_type='refresh')
-    except jwt.ExpiredSignatureError:
-        return jsonify({'error': 'Refresh token has expired.'}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({'error': 'Invalid refresh token.'}), 401
-
-    # Construct a user dictionary using the payload
-    user = {'id': payload.get('user_id'), 'role': payload.get('role')}
-    new_token = generate_jwt(user)
-    return jsonify({'token': new_token}), 200
 
 def verify_token(request_obj):
     """

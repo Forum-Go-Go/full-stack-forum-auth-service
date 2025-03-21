@@ -25,24 +25,6 @@ def generate_jwt(user):
         token = token.decode('utf-8')
     return token
 
-def generate_refresh_token(user):
-    """
-    Generates a refresh token with a longer expiration.
-    """
-    payload = {
-        'user_id': user.get('id'),
-        'role': user.get('role'),
-        'email': user.get('email'),
-        'verified': user.get('verified'),
-        'active': user.get('active'),
-        'iat': datetime.datetime.now(datetime.timezone.utc),
-        'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=REFRESH_TOKEN_EXPIRES_IN)
-    }
-    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-    if isinstance(token, bytes):
-        token = token.decode('utf-8')
-    return token
-
 def decode_jwt(token, token_type='access'):
     """
     Decodes a JWT token. You can extend this to differentiate between access and refresh tokens if needed.

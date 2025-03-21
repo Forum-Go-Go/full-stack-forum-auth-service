@@ -2,7 +2,6 @@
 from flask import request, jsonify
 from auth import auth_bp
 from auth.controllers.auth_controller import login_user, refresh_token, verify_token, logout_user
-from auth.decorators.auth_decorators import authorize
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -18,12 +17,12 @@ def login():
 #     print("🚀 [Auth Routes] /refresh endpoint returning response:", response)
 #     return response
 
-@auth_bp.route('/verify', methods=['GET'])
-def verify():
-    print("🚀 [Auth Routes] /verify endpoint called")
-    response = verify_token(request)
-    print("🚀 [Auth Routes] /verify endpoint returning response:", response)
-    return response
+# @auth_bp.route('/verify', methods=['GET'])
+# def verify():
+#     print("🚀 [Auth Routes] /verify endpoint called")
+#     response = verify_token(request)
+#     print("🚀 [Auth Routes] /verify endpoint returning response:", response)
+#     return response
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
