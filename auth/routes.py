@@ -1,7 +1,7 @@
 # auth/routes.py
 from flask import request, jsonify
 from auth import auth_bp
-from auth.controllers.auth_controller import login_user, refresh_token, verify_token, logout_user
+from auth.controllers.auth_controller import login_user, logout_user
 
 @auth_bp.route('/login', methods=['POST'])
 def login():

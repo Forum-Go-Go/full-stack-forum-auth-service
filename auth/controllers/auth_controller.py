@@ -5,7 +5,7 @@ import jwt
 from flask import jsonify, request
 from werkzeug.security import check_password_hash  # Use this instead of bcrypt.checkpw
 from auth.services.user_service_client import get_user_by_email
-from auth.utils.jwt_utils import generate_jwt, decode_jwt, generate_refresh_token
+from auth.utils.jwt_utils import generate_jwt, decode_jwt
 from dotenv import load_dotenv
 
 import sys
@@ -23,35 +23,35 @@ def login_user(request_obj):
         if not email or not password:
             return jsonify({'error': 'Email and password are required'}), 400
 
-        # ✅ 获取用户信息
+        # get user information
         user = get_user_by_email(email)
-        print(f"🔍 Retrieved user data: {user}")  # ✅ Debug user data
+        print(f"🔍 Retrieved user data: {user}")  # Debug user data
 
         if not user:
             return jsonify({'error': 'Invalid credentials'}), 401
 
-        # ✅ 确保 user 包含 `active`
+        # make sure the active is included
         user_active = user.get('active')
         if user_active is None:
             raise ServerError('User account status is undefined', status_code=500)
             # return jsonify({'error': 'User account status is undefined'}), 500
 
-        # ❌ 账户被封禁
+        # if user is banned
         if user_active == 0:
             print(f"🚫 Login blocked: Banned user -> {email}")
             return jsonify({'error': 'Your account has been banned. Please contact support.'}), 403
 
-        # ✅ 验证密码
+        # validate password
         if not check_password_hash(user.get('hashedPassword', ''), password):
             return jsonify({'error': 'Invalid credentials'}), 401
 
-        # ✅ 生成 JWT 令牌
+        # generate jwt token
         user_payload = {
             'id': user.get('id'),
             'email': user.get('email'),
             'role': user.get('type', 'user'),
             'verified': user.get('verified') == 1,
-            'active': user_active  # ✅ 这里确保 active 正确存储
+            'active': user_active  
         }
 
         token = generate_jwt(user_payload)
