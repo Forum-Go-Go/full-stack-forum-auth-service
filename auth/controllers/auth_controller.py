@@ -8,6 +8,10 @@ from auth.services.user_service_client import get_user_by_email
 from auth.utils.jwt_utils import generate_jwt, decode_jwt, generate_refresh_token
 from dotenv import load_dotenv
 
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+from shared.exceptions import ServerError
+
 load_dotenv()  # Ensure environment variables are loaded
 
 def login_user(request_obj):
@@ -29,7 +33,8 @@ def login_user(request_obj):
         # ✅ 确保 user 包含 `active`
         user_active = user.get('active')
         if user_active is None:
-            return jsonify({'error': 'User account status is undefined'}), 500
+            raise ServerError('User account status is undefined', status_code=500)
+            # return jsonify({'error': 'User account status is undefined'}), 500
 
         # ❌ 账户被封禁
         if user_active == 0:
@@ -67,7 +72,8 @@ def login_user(request_obj):
 
     except Exception as e:
         print(f"❌ Server error during login: {str(e)}")
-        return jsonify({'error': 'Internal Server Error', 'message': str(e)}), 500
+        raise ServerError("Internal Server Error", status_code=500)
+        # return jsonify({'error': 'Internal Server Error', 'message': str(e)}), 500
 
 def refresh_token(request_obj):
     """
